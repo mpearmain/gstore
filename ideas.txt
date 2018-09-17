@@ -1,0 +1,8 @@
+# Generate 10-fold CV
+
+# Build dirty cat encoding for embedding over 1-hot encoding data set
+# Build target encoding of cats dataset.
+
+# Build auto-tuner and model factory.
+
+

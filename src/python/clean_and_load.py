@@ -2,8 +2,9 @@
 Script taken from SRK to load train and test data files and parse JSON cols to have a base data set to work from
 """
 
-import os
 import json
+import os
+
 import pandas as pd
 from pandas.io.json import json_normalize
 
@@ -31,41 +32,36 @@ def load_df(csv_path, nrows=None):
 train_df = load_df("./input/raw/train.csv")
 test_df = load_df("./input/raw/test.csv")
 
-# Drop cols
-cols_to_drop = ['socialEngagementType',
-                'device.browserSize',
-                'device.browserVersion',
-                'device.flashVersion',
-                'device.language',
-                'device.mobileDeviceBranding',
-                'device.mobileDeviceInfo',
-                'device.mobileDeviceMarketingName',
-                'device.mobileDeviceModel',
-                'device.mobileInputSelector',
-                'device.operatingSystemVersion',
-                'device.screenColors',
-                'device.screenResolution',
-                'geoNetwork.cityId',
-                'geoNetwork.latitude',
-                'geoNetwork.longitude',
-                'geoNetwork.networkLocation',
-                'totals.bounces',
-                'totals.newVisits',
-                'totals.visits',
-                'trafficSource.adwordsClickInfo.criteriaParameters',
-                'trafficSource.adwordsClickInfo.isVideoAd',
-                'trafficSource.isTrueDirect',
-                'sessionId']
-
-train_df = train_df.drop(cols_to_drop + ["trafficSource.campaignCode"], axis=1)
-test_df = test_df.drop(cols_to_drop, axis=1)
-
-# Convert str date to timestamp
-train_df['date'] = pd.to_datetime(train_df['date'], format='%Y%m%d')
-test_df['date'] = pd.to_datetime(test_df['date'], format='%Y%m%d')
-
 # Impute 0 for missing target values
 train_df["totals.transactionRevenue"] = train_df["totals.transactionRevenue"].fillna(0).astype(float)
+
+# Generate list of cols with unique values in train.
+columns_to_remove = [col for col in train_df.columns if train_df[col].nunique() == 1]
+print(f"Nb. of variables with unique value: {len(columns_to_remove)}")
+
+# Some make sense as having NaN values as per organisers , only remove those.
+for col in columns_to_remove:
+    if set(['not available in demo dataset']) == set(train_df[col].unique()): continue
+    print(col, train_df[col].dtypes, train_df[col].unique())
+
+train_df['totals.bounces'] = train_df['totals.bounces'].fillna('0')
+test_df['totals.bounces'] = test_df['totals.bounces'].fillna('0')
+train_df['totals.newVisits'] = train_df['totals.newVisits'].fillna('0')
+test_df['totals.newVisits'] = test_df['totals.newVisits'].fillna('0')
+train_df['trafficSource.adwordsClickInfo.isVideoAd'] = train_df['trafficSource.adwordsClickInfo.isVideoAd'].fillna(True)
+test_df['trafficSource.adwordsClickInfo.isVideoAd'] = test_df['trafficSource.adwordsClickInfo.isVideoAd'].fillna(True)
+train_df['trafficSource.isTrueDirect'] = train_df['trafficSource.isTrueDirect'].fillna(False)
+test_df['trafficSource.isTrueDirect'] = test_df['trafficSource.isTrueDirect'].fillna(False)
+
+# Now remove variables with only a single class:
+cols = [col for col in train_df.columns if train_df[col].nunique() > 1]
+train_df = train_df[cols]
+# Remove the target col from test set.
+cols.remove('totals.transactionRevenue')
+test_df = test_df[cols]
+
+# Should only be 'totals.transactionRevenue' different
+print(set(list(train_df)) - set(list(test_df)))
 
 # Dump cleaned data to parquets for later.
 train_df.to_parquet('input/cleaned/train.parquet.gzip', compression='gzip')
