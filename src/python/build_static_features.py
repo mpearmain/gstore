@@ -7,6 +7,10 @@ import pandas as pd
 train_df = pd.read_parquet('input/cleaned/train.parquet.gzip')
 test_df = pd.read_parquet('input/cleaned/test.parquet.gzip')
 
+# Remove target col.
+y_train = train_df['totals.transactionRevenue'].values
+train_df = train_df.drop(['totals.transactionRevenue'], axis=1)
+
 # Join datasets for rowise feature engineering.
 trn_len = train_df.shape[0]
 merged_df = pd.concat([train_df, test_df])
@@ -37,6 +41,7 @@ merged_df = merged_df.drop(['date', 'formated_date', 'visitId', 'sessionId', 'vi
 train_df = merged_df[:trn_len]
 test_df = merged_df[trn_len:]
 
+train_df['totals.transactionRevenue'] = y_train
 print(set(list(train_df)) - set(list(test_df)))
 
 # Dump cleaned data to parquets for later.
