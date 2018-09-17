@@ -64,13 +64,8 @@ test_df = test_df.drop(cols_to_drop, axis=1)
 train_df['date'] = pd.to_datetime(train_df['date'], format='%Y%m%d')
 test_df['date'] = pd.to_datetime(test_df['date'], format='%Y%m%d')
 
-# Build out time based features.
-train_df['year'] = train_df['date'].dt.year
-train_df['month'] = train_df['date'].dt.month
-train_df['weekday'] = train_df['date'].dt.weekday
-
 # Impute 0 for missing target values
-train_df["totals.transactionRevenue"] = train_df["totals.transactionRevenue"].fillna(0).astype(int)
+train_df["totals.transactionRevenue"] = train_df["totals.transactionRevenue"].fillna(0).astype(float)
 
 # Dump cleaned data to parquets for later.
 train_df.to_parquet('input/cleaned/train.parquet.gzip', compression='gzip')
