@@ -34,7 +34,7 @@ merged_df['formated_visitStartTime'] = pd.to_datetime(merged_df['formated_visitS
 merged_df['visit_hour'] = merged_df['formated_visitStartTime'].apply(lambda x: x.hour)
 
 # Drop old vars.
-merged_df = merged_df.drop(['date', 'formated_date', 'visitId', 'sessionId', 'visitStartTime',
+merged_df = merged_df.drop(['formated_date', 'visitId', 'sessionId', 'visitStartTime',
                             'formated_visitStartTime'], axis =1)
 
 # Split data back to original data sets.
