@@ -1,4 +1,4 @@
-# Generate 10-fold CV
+# Generate 5-fold CV
 
 # Build dirty cat encoding for embedding over 1-hot encoding data set
 # Build target encoding of cats dataset.

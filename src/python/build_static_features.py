@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-
+import numpy as np
 import pandas as pd
 
 
@@ -34,9 +34,13 @@ train_df = train_df.drop(['totals.transactionRevenue'], axis=1)
 trn_len = train_df.shape[0]
 merged_df = pd.concat([train_df, test_df])
 
+num_cols = ["totals.hits", "totals.pageviews", "visitNumber", "visitStartTime"]
+for col in num_cols:
+    merged_df[col] = merged_df[col].astype(float)
+
 merged_df['diff_visitId_time'] = merged_df['visitId'] - merged_df['visitStartTime']
-merged_df['diff_visitId_time'] = (merged_df['diff_visitId_time'] != 0).astype(int)
-merged_df['totals.hits'] = merged_df['totals.hits'].astype(int)
+merged_df['diff_visitId_time'] = (merged_df['diff_visitId_time'] != 0).astype(float)
+merged_df['totals.hits'] = merged_df['totals.hits'].astype(float)
 
 # Build Time based features.
 format_str = '%Y%m%d'
@@ -54,6 +58,13 @@ merged_df['visit_hour'] = merged_df['formated_visitStartTime'].apply(lambda x: x
 # Cleanup for keywords
 merged_df['trafficSource.keyword'] = merged_df['trafficSource.keyword'].fillna('nan')
 merged_df['trafficSource.keyword'] = merged_df['trafficSource.keyword'].apply(add_new_category)
+
+merged_df['browser_category'] = merged_df['device.browser'] + '_' + merged_df['device.deviceCategory']
+merged_df['browser_operatingSystem'] = merged_df['device.browser'] + '_' + merged_df['device.operatingSystem']
+merged_df['source_country'] = merged_df['trafficSource.source'] + '_' + merged_df['geoNetwork.country']
+merged_df['visitNumber'] = np.log1p(merged_df['visitNumber'])
+merged_df['totals.hits'] = np.log1p(merged_df['totals.hits'])
+merged_df['totals.pageviews'] = np.log1p(merged_df['totals.pageviews'].astype(float).fillna(0))
 
 # Drop old vars.
 merged_df = merged_df.drop(['formated_date', 'visitId', 'sessionId', 'visitStartTime',

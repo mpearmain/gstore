@@ -7,6 +7,13 @@ from lightgbm import LGBMRegressor
 from ml_metrics import rmse
 
 
+# Load different data sources.
+dev = pd.read_parquet('input/processed/dev_static_features.parquet.gzip')
+valid = pd.read_parquet('input/processed/valid_static_features.parquet.gzip')
+train_df = pd.read_parquet('input/processed/train_static_features.parquet.gzip')
+test_df = pd.read_parquet('input/processed/test_static_features.parquet.gzip')
+
+
 space = space_lightgbm()
 clf = LGBMRegressor(n_jobs=-1, random_state=56, objective='regression', verbose=-1)
 model = tune_model(xtrain, xtrain_y, xvalid, xvalid_y, clf,

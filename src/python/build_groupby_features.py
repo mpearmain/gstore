@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import KFold
 
 """
 Calculate per fold features.
@@ -9,97 +8,98 @@ For each fold we want to have a fold for stacking, this means we drop another le
  
 """
 
-def calculate_groupby_features(train, test, folds):
-    # Run folds for Dev and Valid
-    i = 0
-    for train_index, test_index in kf.split(train):
-        print(f"Running fold {i}")
-        j = 0
-        X_dev, X_valid = train[train_index], train[test_index]
-        j+=1
-        for value, df in [X_dev, X_valid]:
-            print(f"Running dataset {value}")
-            df['browser_category'] = df['device.browser'] + '_' + df['device.deviceCategory']
-            df['browser_operatingSystem'] = df['device.browser'] + '_' + df['device.operatingSystem']
-            df['source_country'] = df['trafficSource.source'] + '_' + df['geoNetwork.country']
-            df['visitNumber'] = np.log1p(df['visitNumber'])
-            df['totals.hits'] = np.log1p(df['totals.hits'])
-            df['totals.pageviews'] = np.log1p(df['totals.pageviews'].fillna(0))
-            df['sum_pageviews_per_network_domain'] = \
-                df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('sum')
-            df['count_pageviews_per_network_domain'] = \
-                df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('count')
-            df['sum_hits_per_network_domain'] = \
-                df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('sum')
-            df['count_hits_per_network_domain'] = \
-                df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('count')
-            df['mean_hits_per_day'] = df.groupby(['day'])['totals.hits'].transform('mean')
-            df['sum_hits_per_day'] = df.groupby(['day'])['totals.hits'].transform('sum')
-            # Network
-            df['sum_pageviews_per_network_domain'] = \
-                df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('sum')
-            df['count_pageviews_per_network_domain'] = \
-                df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('count')
-            df['mean_pageviews_per_network_domain'] = \
-                df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('mean')
-            df['sum_pageviews_per_region'] = df.groupby('geoNetwork.region')['totals.pageviews'].transform('sum')
-            df['count_pageviews_per_region'] = df.groupby('geoNetwork.region')['totals.pageviews'].transform('count')
-            df['mean_pageviews_per_region'] = df.groupby('geoNetwork.region')['totals.pageviews'].transform('mean')
-            df['sum_hits_per_network_domain'] = df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('sum')
-            df['count_hits_per_network_domain'] = df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('count')
-            df['mean_hits_per_network_domain'] = df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('mean')
-            df['sum_hits_per_region'] = df.groupby('geoNetwork.region')['totals.hits'].transform('sum')
-            df['count_hits_per_region'] = df.groupby('geoNetwork.region')['totals.hits'].transform('count')
-            df['mean_hits_per_region'] = df.groupby('geoNetwork.region')['totals.hits'].transform('mean')
-            df['user_pageviews_sum'] = df.groupby('fullVisitorId')['totals.pageviews'].transform('sum')
-            df['user_hits_sum'] = df.groupby('fullVisitorId')['totals.hits'].transform('sum')
-            df['user_pageviews_count'] = df.groupby('fullVisitorId')['totals.pageviews'].transform('count')
-            df['user_hits_count'] = df.groupby('fullVisitorId')['totals.hits'].transform('count')
-            df['user_pageviews_sum_to_mean'] = df['user_pageviews_sum'] / df['user_pageviews_sum'].mean()
-            df['user_hits_sum_to_mean'] = df['user_hits_sum'] / df['user_hits_sum'].mean()
-            df['user_pageviews_to_region'] = df['user_pageviews_sum'] / df['mean_pageviews_per_region']
-            df['user_hits_to_region'] = df['user_hits_sum'] / df['mean_hits_per_region']
 
-    # Finally caluculate for the test set.
-    test['browser_category'] = test['device.browser'] + '_' + test['device.deviceCategory']
-    test['browser_operatingSystem'] = test['device.browser'] + '_' + test['device.operatingSystem']
-    test['source_country'] = test['trafficSource.source'] + '_' + test['geoNetwork.country']
-    test['visitNumber'] = np.log1p(test['visitNumber'])
-    test['totals.hits'] = np.log1p(test['totals.hits'].astype(int))
-    test['totals.pageviews'] = np.log1p(test['totals.pageviews'].astype(float).fillna(0))
-    test['sum_pageviews_per_network_domain'] = \
-        test.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('sum')
-    test['count_pageviews_per_network_domain'] = \
-        test.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('count')
-    test['sum_hits_per_network_domain'] = test.groupby('geoNetwork.networkDomain')['totals.hits'].transform('sum')
-    test['count_hits_per_network_domain'] = test.groupby('geoNetwork.networkDomain')['totals.hits'].transform('count')
-    test['mean_hits_per_day'] = test.groupby(['day'])['totals.hits'].transform('mean')
-    test['sum_hits_per_day'] = test.groupby(['day'])['totals.hits'].transform('sum')
-    test['sum_pageviews_per_network_domain'] = \
-        test.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('sum')
-    test['count_pageviews_per_network_domain'] = \
-        test.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('count')
-    test['mean_pageviews_per_network_domain'] = \
-        test.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('mean')
-    test['sum_pageviews_per_region'] = test.groupby('geoNetwork.region')['totals.pageviews'].transform('sum')
-    test['count_pageviews_per_region'] = test.groupby('geoNetwork.region')['totals.pageviews'].transform('count')
-    test['mean_pageviews_per_region'] = test.groupby('geoNetwork.region')['totals.pageviews'].transform('mean')
-    test['sum_hits_per_network_domain'] = test.groupby('geoNetwork.networkDomain')['totals.hits'].transform('sum')
-    test['count_hits_per_network_domain'] = test.groupby('geoNetwork.networkDomain')['totals.hits'].transform('count')
-    test['mean_hits_per_network_domain'] = test.groupby('geoNetwork.networkDomain')['totals.hits'].transform('mean')
-    test['sum_hits_per_region'] = test.groupby('geoNetwork.region')['totals.hits'].transform('sum')
-    test['count_hits_per_region'] = test.groupby('geoNetwork.region')['totals.hits'].transform('count')
-    test['mean_hits_per_region'] = test.groupby('geoNetwork.region')['totals.hits'].transform('mean')
-    test['user_pageviews_sum'] = test.groupby('fullVisitorId')['totals.pageviews'].transform('sum')
-    test['user_hits_sum'] = test.groupby('fullVisitorId')['totals.hits'].transform('sum')
-    test['user_pageviews_count'] = test.groupby('fullVisitorId')['totals.pageviews'].transform('count')
-    test['user_hits_count'] = test.groupby('fullVisitorId')['totals.hits'].transform('count')
-    test['user_pageviews_sum_to_mean'] = test['user_pageviews_sum'] / test['user_pageviews_sum'].mean()
-    test['user_hits_sum_to_mean'] = test['user_hits_sum'] / test['user_hits_sum'].mean()
-    test['user_pageviews_to_region'] = test['user_pageviews_sum'] / test['mean_pageviews_per_region']
-    test['user_hits_to_region'] = test['user_hits_sum'] / test['mean_hits_per_region']
+def add_noise(series, noise_level):
+    return series * (1 + noise_level * np.random.randn(len(series)))
 
-    return train, test
+
+def target_encode(train_series=None,
+                  test_series=None,
+                  target=None,
+                  min_samples_leaf=1,
+                  smoothing=1,
+                  noise_level=0,
+                  aggr_func="mean"):
+    """
+    Smoothing is computed like in the following paper by Daniele Micci-Barreca
+    https://kaggle2.blob.core.windows.net/forum-message-attachments/225952/7441/high%20cardinality%20categoricals.pdf
+    train_series : training categorical feature as a pd.Series
+    test_series : test categorical feature as a pd.Series
+    target : target data as a pd.Series
+    min_samples_leaf (int) : minimum samples to take category average into account
+    smoothing (int) : smoothing effect to balance categorical average vs prior  
+    """
+    assert len(train_series) == len(target)
+    assert train_series.name == test_series.name
+    temp = pd.concat([train_series, target], axis=1)
+    # Compute target mean 
+    averages = temp.groupby(by=train_series.name)[target.name].agg([aggr_func, "count"])
+    # Compute smoothing
+    smoothing = 1 / (1 + np.exp(-(averages["count"] - min_samples_leaf) / smoothing))
+    # Apply average function to all target data
+    prior = target.mean()
+    # The bigger the count the less full_avg is taken into account
+    averages[target.name] = prior * (1 - smoothing) + averages[aggr_func] * smoothing
+    averages.drop([aggr_func, "count"], axis=1, inplace=True)
+    # Apply averages to trn and tst series
+    ft_train_series = pd.merge(
+        train_series.to_frame(train_series.name),
+        averages.reset_index().rename(columns={'index': target.name, target.name: 'average'}),
+        on=train_series.name,
+        how='left')['average'].rename(train_series.name + '_' + aggr_func).fillna(prior)
+    # pd.merge does not keep the index so restore it
+    ft_train_series.index = train_series.index
+    ft_test_series = pd.merge(
+        test_series.to_frame(test_series.name),
+        averages.reset_index().rename(columns={'index': target.name, target.name: 'average'}),
+        on=test_series.name,
+        how='left')['average'].rename(train_series.name + '_' + aggr_func).fillna(prior)
+    # pd.merge does not keep the index so restore it
+    ft_test_series.index = test_series.index
+    return add_noise(ft_train_series, noise_level), add_noise(ft_test_series, noise_level)
+
+
+def calculate_groupby_features(df):
+
+    # need thing like xdev.groupby('geoNetwork.region')['totals.pageviews'].count().rank()
+
+    df['sum_pageviews_per_network_domain'] = \
+        df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('sum')
+    df['count_pageviews_per_network_domain'] = \
+        df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('count')
+    df['sum_hits_per_network_domain'] = \
+        df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('sum')
+    df['count_hits_per_network_domain'] = \
+        df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('count')
+    df['mean_hits_per_day'] = df.groupby(['day'])['totals.hits'].transform('mean')
+    df['sum_hits_per_day'] = df.groupby(['day'])['totals.hits'].transform('sum')
+    # Network
+    df['sum_pageviews_per_network_domain'] = \
+        df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('sum')
+    df['count_pageviews_per_network_domain'] = \
+        df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('count')
+    df['mean_pageviews_per_network_domain'] = \
+        df.groupby('geoNetwork.networkDomain')['totals.pageviews'].transform('mean')
+    df['sum_pageviews_per_region'] = df.groupby('geoNetwork.region')['totals.pageviews'].transform('sum')
+    df['count_pageviews_per_region'] = df.groupby('geoNetwork.region')['totals.pageviews'].transform('count')
+    df['mean_pageviews_per_region'] = df.groupby('geoNetwork.region')['totals.pageviews'].transform('mean')
+    df['sum_hits_per_network_domain'] = df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('sum')
+    df['count_hits_per_network_domain'] = df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('count')
+    df['mean_hits_per_network_domain'] = df.groupby('geoNetwork.networkDomain')['totals.hits'].transform('mean')
+    df['sum_hits_per_region'] = df.groupby('geoNetwork.region')['totals.hits'].transform('sum')
+    df['count_hits_per_region'] = df.groupby('geoNetwork.region')['totals.hits'].transform('count')
+    df['mean_hits_per_region'] = df.groupby('geoNetwork.region')['totals.hits'].transform('mean')
+    df['user_pageviews_sum'] = df.groupby('fullVisitorId')['totals.pageviews'].transform('sum')
+    df['user_hits_sum'] = df.groupby('fullVisitorId')['totals.hits'].transform('sum')
+    df['user_pageviews_count'] = df.groupby('fullVisitorId')['totals.pageviews'].transform('count')
+    df['user_hits_count'] = df.groupby('fullVisitorId')['totals.hits'].transform('count')
+    df['user_pageviews_sum_to_mean'] = df['user_pageviews_sum'] / df['user_pageviews_sum'].mean()
+    df['user_hits_sum_to_mean'] = df['user_hits_sum'] / df['user_hits_sum'].mean()
+    df['user_pageviews_to_region'] = df['user_pageviews_sum'] / df['mean_pageviews_per_region']
+    df['user_hits_to_region'] = df['user_hits_sum'] / df['mean_hits_per_region']
+
+    return df
+
 
 ## --------------------- Build encoding per fold -----------------------------##
 
@@ -109,12 +109,9 @@ valid = pd.read_parquet('input/processed/valid_static_features.parquet.gzip')
 train_df = pd.read_parquet('input/processed/train_static_features.parquet.gzip')
 test_df = pd.read_parquet('input/processed/test_static_features.parquet.gzip')
 
-# Set the K-fold and run for Dev, Valid, then Train, test
-kf = KFold(n_splits=5, random_state=42, shuffle=False)
-
-
 # Build out dev and valid
-dev, valid = calculate_groupby_features(dev, valid, kf)
+dev = calculate_groupby_features(dev)
+valid = calculate_groupby_features(valid)
 train, test = calculate_groupby_features(train_df, test_df, kf)
 
 print(set(list(train_df)) - set(list(test_df)))
