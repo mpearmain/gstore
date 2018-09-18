@@ -3,6 +3,25 @@ from datetime import datetime
 
 import pandas as pd
 
+
+def add_new_category(x):
+    """
+    Aimed at 'trafficSource.keyword' to tidy things up a little
+    """
+    x = str(x).lower()
+    if x == 'nan':
+        return 'nan'
+    x = ''.join(x.split())
+    if r'provided' in x:
+        return 'not_provided'
+    if r'youtube' in x or r'you' in x or r'yo' in x or r'tub' in x or r'yout' in x or r'y o u' in x:
+        return 'youtube'
+    if r'google' in x or r'goo' in x or r'gle' in x:
+        return 'google'
+    else:
+        return 'other'
+
+
 # Dump cleaned data to parquets for later.
 train_df = pd.read_parquet('input/cleaned/train.parquet.gzip')
 test_df = pd.read_parquet('input/cleaned/test.parquet.gzip')
@@ -32,6 +51,10 @@ merged_df['formated_visitStartTime'] = merged_df['visitStartTime'].apply(
 merged_df['formated_visitStartTime'] = pd.to_datetime(merged_df['formated_visitStartTime'])
 merged_df['visit_hour'] = merged_df['formated_visitStartTime'].apply(lambda x: x.hour)
 
+# Cleanup for keywords
+merged_df['trafficSource.keyword'] = merged_df['trafficSource.keyword'].fillna('nan')
+merged_df['trafficSource.keyword'] = merged_df['trafficSource.keyword'].apply(add_new_category)
+
 # Drop old vars.
 merged_df = merged_df.drop(['formated_date', 'visitId', 'sessionId', 'visitStartTime',
                             'formated_visitStartTime'], axis=1)
@@ -39,27 +62,19 @@ merged_df = merged_df.drop(['formated_date', 'visitId', 'sessionId', 'visitStart
 # Split data back to original data sets.
 train_df = merged_df[:trn_len]
 test_df = merged_df[trn_len:]
+del merged_df
 
 train_df['totals.transactionRevenue'] = y_train
 print(set(list(train_df)) - set(list(test_df)))
 
-"""
-Here we create the dev, valid, split for CVs to use in modelling later.
-These splits are based on 3 week validation 
-"""
 
-# Create splits for CV
+# Here we create the dev, valid, split for CVs to use in modelling later.
+# These splits are based on 3 week validation
 # Split for train and validation based on date
 train_df['date'] = train_df['date'].apply(lambda x: datetime.strptime(str(x), format_str))
 split_date = '2017-05-24'  # 3 weeks
 xdev = train_df.loc[train_df['date'] <= split_date]
 xvalid = train_df.loc[train_df['date'] > split_date]
-
-# take the log(1+x) of the values for better accuracy.
-xdev = xdev.drop(["date"], axis=1)
-xvalid = xvalid.drop(["date"], axis=1)
-train_df = train_df.drop(["date"], axis=1)
-test_df = test_df.drop(["date"], axis=1)
 
 # Dump cleaned data to parquets for later.
 xdev.to_parquet('input/processed/dev_static_features.parquet.gzip', compression='gzip')
