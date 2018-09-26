@@ -49,7 +49,6 @@ merged_df['month'] = merged_df['formated_date'].apply(lambda x: x.month)
 merged_df['quarter_month'] = merged_df['formated_date'].apply(lambda x: x.day // 8)
 merged_df['day'] = merged_df['formated_date'].apply(lambda x: x.day)
 merged_df['weekday'] = merged_df['formated_date'].apply(lambda x: x.weekday())
-
 merged_df['formated_visitStartTime'] = merged_df['visitStartTime'].apply(
     lambda x: time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(x)))
 merged_df['formated_visitStartTime'] = pd.to_datetime(merged_df['formated_visitStartTime'])
@@ -78,17 +77,18 @@ del merged_df
 train_df['totals.transactionRevenue'] = y_train
 print(set(list(train_df)) - set(list(test_df)))
 
+#
+# # Here we create the dev, valid, split for CVs to use in modelling later.
+# # These splits are based on 3 week validation
+# # Split for train and validation based on date
+# train_df['date'] = train_df['date'].apply(lambda x: datetime.strptime(str(x), format_str))
+# split_date = '2017-05-31'
+# xdev = train_df.loc[train_df['date'] <= split_date]
+# xvalid = train_df.loc[train_df['date'] > split_date]
+#
+# # Dump cleaned data to parquets for later.
+# xdev.to_parquet('input/processed/dev_static_features.parquet.gzip', compression='gzip')
+# xvalid.to_parquet('input/processed/valid_static_features.parquet.gzip', compression='gzip')
 
-# Here we create the dev, valid, split for CVs to use in modelling later.
-# These splits are based on 3 week validation
-# Split for train and validation based on date
-train_df['date'] = train_df['date'].apply(lambda x: datetime.strptime(str(x), format_str))
-split_date = '2017-05-24'  # 3 weeks
-xdev = train_df.loc[train_df['date'] <= split_date]
-xvalid = train_df.loc[train_df['date'] > split_date]
-
-# Dump cleaned data to parquets for later.
-xdev.to_parquet('input/processed/dev_static_features.parquet.gzip', compression='gzip')
-xvalid.to_parquet('input/processed/valid_static_features.parquet.gzip', compression='gzip')
 train_df.to_parquet('input/processed/train_static_features.parquet.gzip', compression='gzip')
 test_df.to_parquet('input/processed/test_static_features.parquet.gzip', compression='gzip')

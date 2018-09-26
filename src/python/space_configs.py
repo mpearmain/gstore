@@ -45,30 +45,33 @@ def tune_model(X_train, y_train, X_test, y_test, model,
 
 def space_lightgbm():
     space = [Categorical(['gbdt', 'gbrt', 'dart', 'goss'], name='boosting_type'),
-             Integer(2, 10, name="num_leaves"),
-             Integer(5, 15, name='max_depth'),
-             Real(10 ** -5, 10 ** 0, "log-uniform", name='learning_rate'),
+             Integer(150, 1500, name="num_leaves"),
+             Integer(5, 25, name='max_depth'),
+             Real(0.005, 0.05, "log-uniform", name='learning_rate'),
              Integer(100, 1000, name="max_bin"),
              Integer(250, 2500, name="n_estimators"),
              Real(0.6, 0.9, name="bagging_fraction"),
              Real(0.6, 0.9, name="colsample_bytree"),
-             Real(2., 10., name="min_child_weight"),
+             Real(2., 20., name="min_child_weight"),
+             Integer(25, 50, name="min_child_samples"),
+             Real(0.1, 0.5, name="reg_alpha"),
              ]
     return space
 
 
-def space_ProximalFM():
-    space = [Real(0.01, 0.2, "log-uniform", name='alpha'),
-             Real(0.5, 2, "log-uniform", name='beta'),
-             Real(0.01, 1.5, "log-uniform", name='l1_reg'),
-             Real(0.01, 1.5, "log-uniform", name='l2_reg'),
-             Real(0.001, 0.1, "log-uniform", name='alpha_fm'),
-             Real(0.5, 1.5, "log-uniform", name='beta_fm'),
-             Real(0.001, 0.01, "log-uniform", name='l1_fm_reg'),
-             Real(0.001, 0.01, "log-uniform", name='l2_fm_reg'),
-             Integer(2, 6, name='fm_dim'),
-             Real(0.001, 0.1, "log-uniform", name='fm_initdev'),
-             Integer(1, 8, name='epoch')]
+def space_xlearn():
+    space = [Integer(300, 1000, name='block_size'),
+             Real(0.005, 0.1, name='lr'),
+             Integer(4, 20, name='k'),
+             Real(0.01, 0.5, name='reg_lambda'),
+             Real(0.01, 0.5, name='init'),
+             Integer(4, 50, name='epoch'),
+             Categorical(['adagrad', 'ftrl'], name='opt'),
+             Real(0.1, 2.5, name='alpha'),
+             Real(0.1, 2.5, name='beta'),
+             Real(0.1, 2.5, name='lambda_1'),
+             Real(0.1, 2.5, name='lambda_2'),
+             ]
     return space
 
 
