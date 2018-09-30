@@ -1,5 +1,5 @@
 import time
-from datetime import datetime
+
 import numpy as np
 import pandas as pd
 
@@ -43,31 +43,46 @@ merged_df['diff_visitId_time'] = (merged_df['diff_visitId_time'] != 0).astype(fl
 merged_df['totals.hits'] = merged_df['totals.hits'].astype(float)
 
 # Build Time based features.
-format_str = '%Y%m%d'
-merged_df['formated_date'] = merged_df['date'].apply(lambda x: datetime.strptime(str(x), format_str))
-merged_df['month'] = merged_df['formated_date'].apply(lambda x: x.month)
-merged_df['quarter_month'] = merged_df['formated_date'].apply(lambda x: x.day // 8)
-merged_df['day'] = merged_df['formated_date'].apply(lambda x: x.day)
-merged_df['weekday'] = merged_df['formated_date'].apply(lambda x: x.weekday())
-merged_df['formated_visitStartTime'] = merged_df['visitStartTime'].apply(
-    lambda x: time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(x)))
-merged_df['formated_visitStartTime'] = pd.to_datetime(merged_df['formated_visitStartTime'])
-merged_df['visit_hour'] = merged_df['formated_visitStartTime'].apply(lambda x: x.hour)
+merged_df['formated_date'] = pd.to_datetime(merged_df['date'], format='%Y%m%d')
+merged_df['month'] = pd.DatetimeIndex(merged_df['formated_date']).month
+merged_df['year'] = pd.DatetimeIndex(merged_df['formated_date']).year
+merged_df['day'] = pd.DatetimeIndex(merged_df['formated_date']).day
+merged_df['quarter'] = pd.DatetimeIndex(merged_df['formated_date']).quarter
+merged_df['weekday'] = pd.DatetimeIndex(merged_df['formated_date']).weekday
+merged_df['weekofyear'] = pd.DatetimeIndex(merged_df['formated_date']).weekofyear
+
+merged_df['is_month_start'] = pd.DatetimeIndex(merged_df['formated_date']).is_month_start
+merged_df['is_month_end'] = pd.DatetimeIndex(merged_df['formated_date']).is_month_end
+merged_df['is_quarter_start'] = pd.DatetimeIndex(merged_df['formated_date']).is_quarter_start
+merged_df['is_quarter_end'] = pd.DatetimeIndex(merged_df['formated_date']).is_quarter_end
+merged_df['is_year_start'] = pd.DatetimeIndex(merged_df['formated_date']).is_year_start
+merged_df['is_year_end'] = pd.DatetimeIndex(merged_df['formated_date']).is_year_end
+
+merged_df['month_unique_user_count'] = merged_df.groupby('month')['fullVisitorId'].transform('nunique')
+merged_df['day_unique_user_count'] = merged_df.groupby('day')['fullVisitorId'].transform('nunique')
+merged_df['weekday_unique_user_count'] = merged_df.groupby('weekday')['fullVisitorId'].transform('nunique')
+
+merged_df['visitStartTime'] = pd.to_datetime(merged_df['visitStartTime'], unit='s')
+merged_df['hour'] = pd.DatetimeIndex(merged_df['visitStartTime']).hour
+merged_df['minute'] = pd.DatetimeIndex(merged_df['visitStartTime']).minute
 
 # Cleanup for keywords
 merged_df['trafficSource.keyword'] = merged_df['trafficSource.keyword'].fillna('nan')
-merged_df['trafficSource.keyword'] = merged_df['trafficSource.keyword'].apply(add_new_category)
+merged_df['trafficSource.keyword_groups'] = merged_df['trafficSource.keyword'].apply(add_new_category)
 
 merged_df['browser_category'] = merged_df['device.browser'] + '_' + merged_df['device.deviceCategory']
 merged_df['browser_operatingSystem'] = merged_df['device.browser'] + '_' + merged_df['device.operatingSystem']
 merged_df['source_country'] = merged_df['trafficSource.source'] + '_' + merged_df['geoNetwork.country']
-merged_df['visitNumber'] = np.log1p(merged_df['visitNumber'])
-merged_df['totals.hits'] = np.log1p(merged_df['totals.hits'])
-merged_df['totals.pageviews'] = np.log1p(merged_df['totals.pageviews'].astype(float).fillna(0))
+merged_df['log.visitNumber'] = np.log1p(merged_df['visitNumber'])
+merged_df['log.totals.hits'] = np.log1p(merged_df['totals.hits'])
+merged_df['totals.pageviews'] = merged_df['totals.pageviews'].astype(float).fillna(0)
+merged_df['log.totals.pageviews'] = np.log1p(merged_df['totals.pageviews'])
+
+
+merged_df["page_hits_ratio"] =  merged_df['visitNumber'] / (merged_df['totals.pageviews'] + 1)
 
 # Drop old vars.
-merged_df = merged_df.drop(['formated_date', 'visitId', 'sessionId', 'visitStartTime',
-                            'formated_visitStartTime'], axis=1)
+merged_df = merged_df.drop(['formated_date', 'visitId', 'sessionId', 'visitStartTime'], axis=1)
 
 # Split data back to original data sets.
 train_df = merged_df[:trn_len]
@@ -76,19 +91,6 @@ del merged_df
 
 train_df['totals.transactionRevenue'] = y_train
 print(set(list(train_df)) - set(list(test_df)))
-
-#
-# # Here we create the dev, valid, split for CVs to use in modelling later.
-# # These splits are based on 3 week validation
-# # Split for train and validation based on date
-# train_df['date'] = train_df['date'].apply(lambda x: datetime.strptime(str(x), format_str))
-# split_date = '2017-05-31'
-# xdev = train_df.loc[train_df['date'] <= split_date]
-# xvalid = train_df.loc[train_df['date'] > split_date]
-#
-# # Dump cleaned data to parquets for later.
-# xdev.to_parquet('input/processed/dev_static_features.parquet.gzip', compression='gzip')
-# xvalid.to_parquet('input/processed/valid_static_features.parquet.gzip', compression='gzip')
 
 train_df.to_parquet('input/processed/train_static_features.parquet.gzip', compression='gzip')
 test_df.to_parquet('input/processed/test_static_features.parquet.gzip', compression='gzip')

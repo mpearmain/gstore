@@ -8,7 +8,7 @@ from lightgbm import LGBMRegressor
 from pandas.io.json import json_normalize
 from pystacknet.pystacknet import StackNetRegressor
 from sklearn.ensemble import RandomForestRegressor, ExtraTreesRegressor
-from sklearn.linear_model import RANSACRegressor, Ridge
+from sklearn.linear_model import Ridge
 from sklearn.model_selection import KFold
 
 IS_LOCAL = False
@@ -17,10 +17,7 @@ if (IS_LOCAL):
 else:
     PATH = "./input/"
 
-NUM_ROUNDS = 20000
-VERBOSE_EVAL = 250
-STOP_ROUNDS = 250
-N_SPLITS = 10
+N_SPLITS = 3
 
 
 def get_logger():
@@ -303,7 +300,7 @@ def model(train_df=None, test_df=None, not_used_cols=None):
         [RandomForestRegressor(n_estimators=500, random_state=42, n_jobs=-1)]
     ]
 
-    model = StackNetRegressor(models, metric="rmse", folds=10, restacking=False, use_retraining=True,
+    model = StackNetRegressor(models, metric="rmse", folds=3, restacking=True, use_retraining=True,
                               random_state=12345, n_jobs=1, verbose=1)
 
     model.fit(X, y)
@@ -360,3 +357,5 @@ def main(sum_of_logs=False, nrows=None):
 
 if __name__ == "__main__":
     main(nrows=None)
+
+

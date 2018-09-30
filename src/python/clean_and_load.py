@@ -56,9 +56,33 @@ test_df['trafficSource.isTrueDirect'] = test_df['trafficSource.isTrueDirect'].fi
 # Now remove variables with only a single class:
 cols = [col for col in train_df.columns if train_df[col].nunique() > 1]
 train_df = train_df[cols]
+
+# Lets convert obvious things now.
+
+train_df['visitStartTime'].astype(str).astype(int)
+train_df['visitId'].astype(str).astype(int)
+train_df['totals.transactionRevenue'].fillna(value = '0', inplace = True)
+train_df['totals.transactionRevenue'] = train_df['totals.transactionRevenue'].astype(int)
+train_df['visitNumber'].astype(str).astype(int)
+train_df['totals.hits'] = train_df['totals.hits'].astype(int)
+train_df['totals.pageviews'].fillna(value = '0', inplace = True)
+train_df['totals.pageviews'] = train_df['totals.pageviews'].astype(int)
+
+test_df['visitStartTime'].astype(str).astype(int)
+test_df['visitId'].astype(str).astype(int)
+test_df['visitNumber'].astype(str).astype(int)
+test_df['totals.hits'] = test_df['totals.hits'].astype(int)
+test_df['totals.pageviews'].fillna(value = '0', inplace = True)
+test_df['totals.pageviews'] = test_df['totals.pageviews'].astype(int)
+
+
+
 # Remove the target col from test set.
 cols.remove('totals.transactionRevenue')
 test_df = test_df[cols]
+
+
+
 
 # Should only be 'totals.transactionRevenue' different
 print(set(list(train_df)) - set(list(test_df)))
